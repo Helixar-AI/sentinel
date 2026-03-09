@@ -87,7 +87,10 @@ class ProbeScanner:
                     cert = ssock.getpeercert()
                     not_after = cert.get("notAfter", "")
                     if not_after:
-                        expiry = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z").replace(tzinfo=timezone.utc)
+                        cert_fmt = "%b %d %H:%M:%S %Y %Z"
+                        expiry = datetime.strptime(not_after, cert_fmt).replace(
+                            tzinfo=timezone.utc
+                        )
                         if expiry < datetime.now(timezone.utc):
                             f = self._make_finding(
                                 "tls_cert_invalid", f"{host}:{port}",
@@ -109,7 +112,10 @@ class ProbeScanner:
             ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             ctx.check_hostname = False
             ctx.verify_mode = ssl.CERT_NONE
-            ctx.minimum_version = ssl.TLSVersion.SSLv3 if hasattr(ssl.TLSVersion, "SSLv3") else ssl.TLSVersion.TLSv1
+            min_ver = (
+                ssl.TLSVersion.SSLv3 if hasattr(ssl.TLSVersion, "SSLv3") else ssl.TLSVersion.TLSv1
+            )
+            ctx.minimum_version = min_ver
             with socket.create_connection((host, port), timeout=timeout) as sock:
                 with ctx.wrap_socket(sock, server_hostname=host) as ssock:
                     version = ssock.version()

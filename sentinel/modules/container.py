@@ -92,8 +92,6 @@ class ContainerScanner:
     def _scan_image(self, image, result: ScanResult, target: str) -> None:
         attrs = image.attrs or {}
         config = attrs.get("Config", {})
-        container_config = attrs.get("ContainerConfig", {})
-
         self._check_running_as_root(config, result, target)
         self._check_sensitive_env_vars(config, result, target)
         self._check_health_check(config, result, target)
@@ -147,7 +145,9 @@ class ContainerScanner:
                     result.add_finding(f)
                 return  # one finding per scan
 
-    def _check_writable_filesystem(self, host_config: dict, result: ScanResult, target: str) -> None:
+    def _check_writable_filesystem(
+        self, host_config: dict, result: ScanResult, target: str
+    ) -> None:
         read_only = host_config.get("ReadonlyRootfs", False)
         if not read_only:
             f = self._make_finding(
@@ -167,7 +167,9 @@ class ContainerScanner:
             if f:
                 result.add_finding(f)
 
-    def _check_outdated_image(self, config: dict, attrs: dict, result: ScanResult, target: str) -> None:
+    def _check_outdated_image(
+        self, config: dict, attrs: dict, result: ScanResult, target: str
+    ) -> None:
         # Heuristic: check if image has known old-format metadata suggesting staleness
         created = attrs.get("Created", "")
         # We check via image labels for update advisories — lightweight heuristic

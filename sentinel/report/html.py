@@ -4,7 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import List
 
-from sentinel.core import Severity, ScanResult
+from sentinel.core import ScanResult, Severity
 
 _SEVERITY_CSS = {
     Severity.CRITICAL: "#dc2626",
@@ -37,7 +37,8 @@ _HTML_TEMPLATE = """\
     .no-findings {{ color: #4ade80; font-size: 0.875rem; padding: 12px 0; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 0.875rem; }}
     th {{ text-align: left; padding: 10px 12px; background: #1e293b; color: #94a3b8;
-          font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; }}
+          font-weight: 600; text-transform: uppercase; font-size: 0.75rem;
+          letter-spacing: 0.05em; }}
     td {{ padding: 10px 12px; border-bottom: 1px solid #1e293b; vertical-align: top; }}
     tr:hover td {{ background: #1e293b; }}
     .sev {{ font-weight: 700; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px;

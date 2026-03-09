@@ -15,6 +15,8 @@ from sentinel.report import terminal as terminal_report
 
 _FAIL_ORDER = [Severity.INFO, Severity.LOW, Severity.MEDIUM, Severity.HIGH, Severity.CRITICAL]
 
+_FMT_CHOICES = click.Choice(["terminal", "json", "sarif", "html"])
+
 
 def _should_fail(results, fail_on: str) -> bool:
     try:
@@ -31,16 +33,12 @@ def _should_fail(results, fail_on: str) -> bool:
 def _write_output(results, fmt: str, output: Optional[str]) -> None:
     if fmt == "html":
         content = html_report.render(results)
-        mode = "w"
     elif fmt == "sarif":
         content = sarif_report.render_sarif_string(results)
-        mode = "w"
     elif fmt == "json":
         content = sarif_report.render_json_string(results)
-        mode = "w"
     else:
         content = terminal_report.render_to_string(results)
-        mode = "w"
 
     if output:
         Path(output).write_text(content)
@@ -59,9 +57,13 @@ def cli() -> None:
 
 @cli.command()
 @click.argument("config_path", type=click.Path(exists=True))
-@click.option("--format", "fmt", default="terminal", type=click.Choice(["terminal", "json", "sarif", "html"]))
+@click.option("--format", "fmt", default="terminal", type=_FMT_CHOICES)
 @click.option("--output", default=None, help="Write report to file instead of stdout.")
-@click.option("--fail-on", default="high", help="Exit 1 if findings >= this severity (critical/high/medium/low/info).")
+@click.option(
+    "--fail-on",
+    default="high",
+    help="Exit 1 if findings >= this severity (critical/high/medium/low/info).",
+)
 def config(config_path: str, fmt: str, output: Optional[str], fail_on: str) -> None:
     """Scan an MCP server config file for security issues."""
     scanner = ConfigScanner()
@@ -76,14 +78,26 @@ def config(config_path: str, fmt: str, output: Optional[str], fail_on: str) -> N
 
 @cli.command()
 @click.argument("endpoint")
-@click.option("--format", "fmt", default="terminal", type=click.Choice(["terminal", "json", "sarif", "html"]))
+@click.option("--format", "fmt", default="terminal", type=_FMT_CHOICES)
 @click.option("--output", default=None)
 @click.option("--fail-on", default="high")
-@click.option("--safe-mode/--no-safe-mode", default=True, help="Safe mode: observe only, no mutations.")
+@click.option(
+    "--safe-mode/--no-safe-mode",
+    default=True,
+    help="Safe mode: observe only, no mutations.",
+)
 @click.option("--timeout", default=10, help="Request timeout in seconds.")
-def probe(endpoint: str, fmt: str, output: Optional[str], fail_on: str, safe_mode: bool, timeout: int) -> None:
+def probe(
+    endpoint: str,
+    fmt: str,
+    output: Optional[str],
+    fail_on: str,
+    safe_mode: bool,
+    timeout: int,
+) -> None:
     """Probe a live MCP endpoint for security issues."""
     from sentinel.modules.probe import ProbeScanner
+
     scanner = ProbeScanner(safe_mode=safe_mode)
     result = scanner.scan(endpoint, timeout=timeout)
     results = [result]
@@ -96,12 +110,13 @@ def probe(endpoint: str, fmt: str, output: Optional[str], fail_on: str, safe_mod
 
 @cli.command()
 @click.argument("target")
-@click.option("--format", "fmt", default="terminal", type=click.Choice(["terminal", "json", "sarif", "html"]))
+@click.option("--format", "fmt", default="terminal", type=_FMT_CHOICES)
 @click.option("--output", default=None)
 @click.option("--fail-on", default="high")
 def container(target: str, fmt: str, output: Optional[str], fail_on: str) -> None:
     """Inspect a Docker container or image for security issues."""
     from sentinel.modules.container import ContainerScanner
+
     scanner = ContainerScanner()
     result = scanner.scan(target)
     results = [result]
@@ -116,7 +131,7 @@ def container(target: str, fmt: str, output: Optional[str], fail_on: str) -> Non
 @click.option("--config", "config_path", default=None, type=click.Path())
 @click.option("--endpoint", default=None)
 @click.option("--container", "container_target", default=None)
-@click.option("--format", "fmt", default="terminal", type=click.Choice(["terminal", "json", "sarif", "html"]))
+@click.option("--format", "fmt", default="terminal", type=_FMT_CHOICES)
 @click.option("--output", default=None)
 @click.option("--fail-on", default="high")
 @click.option("--safe-mode/--no-safe-mode", default=True)
@@ -140,11 +155,13 @@ def scan(
 
     if endpoint:
         from sentinel.modules.probe import ProbeScanner
+
         scanner_p = ProbeScanner(safe_mode=safe_mode)
         results.append(scanner_p.scan(endpoint, timeout=timeout))
 
     if container_target:
         from sentinel.modules.container import ContainerScanner
+
         scanner_c = ContainerScanner()
         results.append(scanner_c.scan(container_target))
 

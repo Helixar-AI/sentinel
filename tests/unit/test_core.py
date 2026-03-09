@@ -1,6 +1,7 @@
 """9 tests for core data models: Severity, Finding, ScanResult."""
 import pytest
-from sentinel.core import Severity, Finding, ScanResult
+
+from sentinel.core import Finding, ScanResult, Severity
 
 
 class TestSeverity:

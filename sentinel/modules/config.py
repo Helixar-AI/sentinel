@@ -8,7 +8,7 @@ from typing import Any, Optional
 
 import yaml
 
-from sentinel.core import Finding, ScanResult, Severity
+from sentinel.core import Finding, ScanResult
 from sentinel.rules import RuleRegistry
 
 # Patterns that suggest plaintext secrets
@@ -166,7 +166,8 @@ class ConfigScanner:
 
     def _check_debug_mode(self, config: dict, result: ScanResult, path: Path) -> None:
         debug = _get_nested(config, "debug")
-        if debug is True or (isinstance(debug, str) and debug.lower() in ("true", "1", "yes", "on")):
+        debug_on = ("true", "1", "yes", "on")
+        if debug is True or (isinstance(debug, str) and debug.lower() in debug_on):
             f = self._make_finding(
                 "debug_mode_enabled", str(path),
                 f"'debug' is set to {debug!r} — disable in production.",
@@ -195,7 +196,9 @@ class ConfigScanner:
             return
         origins = None
         if isinstance(cors, dict):
-            origins = cors.get("allowed_origins") or cors.get("origins") or cors.get("allow_origins")
+            origins = (
+                cors.get("allowed_origins") or cors.get("origins") or cors.get("allow_origins")
+            )
         elif isinstance(cors, str):
             origins = cors
 
@@ -241,7 +244,8 @@ class ConfigScanner:
                 ("log_body", log_body),
                 ("log_auth", log_auth),
             ]:
-                if flag_val is True or (isinstance(flag_val, str) and flag_val.lower() in ("true", "1", "yes")):
+                flag_on = ("true", "1", "yes")
+                if flag_val is True or (isinstance(flag_val, str) and flag_val.lower() in flag_on):
                     f = self._make_finding(
                         "sensitive_logging", str(path),
                         f"Logging config has '{flag_name}' enabled — may expose sensitive data.",

@@ -1,11 +1,6 @@
 """17 tests for HTML, SARIF, and terminal renderers."""
 from __future__ import annotations
 
-import json
-from typing import List
-
-import pytest
-
 from sentinel.core import Finding, ScanResult, Severity
 from sentinel.report import html as html_report
 from sentinel.report import sarif as sarif_report

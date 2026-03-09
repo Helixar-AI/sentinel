@@ -1,7 +1,6 @@
 """11 tests for RuleRegistry."""
-import pytest
-from sentinel.rules import RuleRegistry, Rule
 from sentinel.core import Severity
+from sentinel.rules import RuleRegistry
 
 
 class TestRuleRegistry:
