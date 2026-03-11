@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import signal as _signal
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
@@ -165,6 +167,157 @@ class TestScanCommand:
     def test_scan_fail_on_threshold_respected(self, runner, high_only_file):
         result = runner.invoke(cli, ["scan", "--config", high_only_file, "--fail-on", "critical"])
         assert result.exit_code == 0
+
+
+class TestWatchCommand:
+    """Tests for `sentinel watch`
+
+    As watch runs an infinite loop all tests patch ``signal.signal``
+    to capture the SIGINT handler and ``time.sleep`` to fire it after the 
+    first sleep call, giving exactly one full scan cycle per invocation
+    """
+
+    @pytest.fixture
+    def _one_cycle(self):
+        """Patch signal + sleep so the watch loop executes exactly one cycle."""
+        captured = {}
+
+        def _mock_signal(sig, handler):
+            if sig == _signal.SIGINT:
+                captured["handler"] = handler
+
+        def _mock_sleep(_secs):
+            if "handler" in captured:
+                captured["handler"](None, None)
+
+        with patch("signal.signal", side_effect=_mock_signal), patch(
+            "time.sleep", side_effect=_mock_sleep
+        ):
+            yield
+
+    @pytest.fixture
+    def _two_cycles(self):
+        """Patch signal + sleep so the watch loop executes exactly two cycles."""
+        captured = {}
+        call_count = {"n": 0}
+
+        def _mock_signal(sig, handler):
+            if sig == _signal.SIGINT:
+                captured["handler"] = handler
+
+        def _mock_sleep(_secs):
+            call_count["n"] += 1
+            if call_count["n"] >= 2 and "handler" in captured:
+                captured["handler"](None, None)
+
+        with patch("signal.signal", side_effect=_mock_signal), patch(
+            "time.sleep", side_effect=_mock_sleep
+        ):
+            yield
+
+    def test_no_targets_exits_2(self, runner):
+        result = runner.invoke(cli, ["watch"])
+        assert result.exit_code == 2
+
+    def test_no_targets_prints_usage_hint(self, runner):
+        result = runner.invoke(cli, ["watch"])
+        assert "No targets" in result.output or "No targets" in (result.stderr or "")
+
+    def test_one_cycle_outputs_cycle_header(self, runner, insecure_file, _one_cycle):
+        result = runner.invoke(cli, ["watch", "--config", insecure_file, "--interval", "1"])
+        assert result.exit_code == 0
+        assert "Cycle 1" in result.output
+
+    def test_one_cycle_prints_stop_message(self, runner, insecure_file, _one_cycle):
+        result = runner.invoke(cli, ["watch", "--config", insecure_file, "--interval", "1"])
+        assert "sentinel watch stopped" in result.output
+
+    def test_one_cycle_contains_findings(self, runner, insecure_file, _one_cycle):
+        result = runner.invoke(cli, ["watch", "--config", insecure_file, "--interval", "1"])
+        assert "CFG-001" in result.output
+
+    def test_two_cycles_second_shows_no_change(self, runner, insecure_file, _two_cycles):
+        result = runner.invoke(cli, ["watch", "--config", insecure_file, "--interval", "1"])
+        assert "Cycle 2" in result.output
+        assert "no change" in result.output
+
+    def test_two_cycles_second_shows_changed_when_findings_differ(
+        self, runner, tmp_path, _two_cycles
+    ):
+        cfg = tmp_path / "mutable.json"
+        cfg.write_text(json.dumps(INSECURE_CONFIG))
+
+        call_count = {"n": 0}
+        original_scan = None
+
+        # clean config on the second scan cycle
+        from sentinel.modules.config import ConfigScanner
+
+        original_scan = ConfigScanner.scan
+
+        def _patched_scan(self, path):
+            call_count["n"] += 1
+            if call_count["n"] == 2:
+                import json as _json
+
+                from tests.fixtures.configs import SECURE_CONFIG
+
+                path.write_text(_json.dumps(SECURE_CONFIG))
+            return original_scan(self, path)
+
+        with patch.object(ConfigScanner, "scan", _patched_scan):
+            result = runner.invoke(
+                cli, ["watch", "--config", str(cfg), "--interval", "1"]
+            )
+
+        assert "CHANGED" in result.output
+
+    def test_on_change_suppresses_report_when_no_change(self, runner, insecure_file, _two_cycles):
+        result = runner.invoke(
+            cli,
+            ["watch", "--config", insecure_file, "--interval", "1", "--on-change"],
+        )
+        assert "no change, skipping report" in result.output
+        # header should appear once (cycle 1 only — cycle 2 is suppressed)
+        assert result.output.count("Cycle 1") == 1
+        assert result.output.count("CFG-001") == 1
+
+    def test_on_change_emits_report_on_first_cycle(self, runner, insecure_file, _one_cycle):
+        result = runner.invoke(
+            cli,
+            ["watch", "--config", insecure_file, "--interval", "1", "--on-change"],
+        )
+        assert "CFG-001" in result.output
+
+    def test_output_file_written_each_cycle(self, runner, insecure_file, tmp_path, _one_cycle):
+        out = str(tmp_path / "watch_report.json")
+        runner.invoke(
+            cli,
+            [
+                "watch",
+                "--config",
+                insecure_file,
+                "--format",
+                "json",
+                "--output",
+                out,
+                "--interval",
+                "1",
+            ],
+        )
+        assert Path(out).exists()
+        data = json.loads(Path(out).read_text())
+        assert "results" in data
+
+    def test_json_format_per_cycle(self, runner, insecure_file, tmp_path, _one_cycle):
+        out = str(tmp_path / "out.json")
+        runner.invoke(
+            cli,
+            ["watch", "--config", insecure_file, "--format", "json", "--output", out, "--interval", "1"],
+        )
+        data = json.loads(Path(out).read_text())
+        rule_ids = [f["rule_id"] for r in data["results"] for f in r["findings"]]
+        assert "CFG-001" in rule_ids
 
 
 class TestVersionFlag:
