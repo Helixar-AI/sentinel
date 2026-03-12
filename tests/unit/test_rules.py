@@ -1,4 +1,5 @@
 """11 tests for RuleRegistry."""
+
 from sentinel.core import Severity
 from sentinel.rules import RuleRegistry
 

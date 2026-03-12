@@ -1,4 +1,5 @@
 """Standalone HTML report renderer."""
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -102,8 +103,7 @@ def render(results: List[ScanResult]) -> str:
             for f in sorted(result.findings, key=lambda x: x.severity, reverse=True):
                 color = _SEVERITY_CSS.get(f.severity, "#6b7280")
                 ref_link = (
-                    f'<a href="{f.reference}" style="color:#38bdf8" target="_blank">'
-                    f'{f.rule_id}</a>'
+                    f'<a href="{f.reference}" style="color:#38bdf8" target="_blank">{f.rule_id}</a>'
                     if f.reference
                     else f.rule_id
                 )
@@ -150,9 +150,5 @@ def render(results: List[ScanResult]) -> str:
 
 def _html_escape(text: str) -> str:
     return (
-        text
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace('"', "&quot;")
+        text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
     )

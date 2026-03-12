@@ -36,7 +36,7 @@ INSECURE_CONFIG = {
     # no auth block
     # no tls block
     # no rate_limit block
-    "api_key": "sk-abc123supersecretkey",   # plaintext secret
+    "api_key": "sk-abc123supersecretkey",  # plaintext secret
     "debug": True,
     "cors": {
         "allowed_origins": "*",
