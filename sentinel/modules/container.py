@@ -1,4 +1,5 @@
 """Docker container and image security inspection."""
+
 from __future__ import annotations
 
 import re
@@ -58,13 +59,15 @@ class ContainerScanner:
                 pass
 
         if container_obj is None and image_obj is None:
-            result.add_finding(Finding(
-                rule_id="CTR-ERR",
-                severity=__import__("sentinel.core", fromlist=["Severity"]).Severity.INFO,
-                title="Container/image not found",
-                detail=f"Could not find container or image: {target}",
-                location=target,
-            ))
+            result.add_finding(
+                Finding(
+                    rule_id="CTR-ERR",
+                    severity=__import__("sentinel.core", fromlist=["Severity"]).Severity.INFO,
+                    title="Container/image not found",
+                    detail=f"Could not find container or image: {target}",
+                    location=target,
+                )
+            )
             return result
 
         if container_obj is not None:
@@ -103,7 +106,8 @@ class ContainerScanner:
         user = config.get("User", "")
         if user in ("", "0", "root"):
             f = self._make_finding(
-                "running_as_root", target,
+                "running_as_root",
+                target,
                 f"Container User is {user!r} — process runs as UID 0 (root).",
             )
             if f:
@@ -112,7 +116,8 @@ class ContainerScanner:
     def _check_privileged(self, host_config: dict, result: ScanResult, target: str) -> None:
         if host_config.get("Privileged", False):
             f = self._make_finding(
-                "privileged_container", target,
+                "privileged_container",
+                target,
                 "Container is running with --privileged flag.",
             )
             if f:
@@ -124,7 +129,8 @@ class ContainerScanner:
         cpu_quota = host_config.get("CpuQuota", 0)
         if not memory and not nano_cpus and not cpu_quota:
             f = self._make_finding(
-                "no_resource_limits", target,
+                "no_resource_limits",
+                target,
                 "No memory or CPU limits set on container.",
             )
             if f:
@@ -138,7 +144,8 @@ class ContainerScanner:
             key, _, value = entry.partition("=")
             if _SECRET_KEY_RE.search(key) and value and not value.startswith("$"):
                 f = self._make_finding(
-                    "sensitive_env_vars", target,
+                    "sensitive_env_vars",
+                    target,
                     f"Environment variable '{key}' appears to contain a plaintext secret.",
                 )
                 if f:
@@ -151,7 +158,8 @@ class ContainerScanner:
         read_only = host_config.get("ReadonlyRootfs", False)
         if not read_only:
             f = self._make_finding(
-                "writable_filesystem", target,
+                "writable_filesystem",
+                target,
                 "Container root filesystem is writable (ReadonlyRootfs=false).",
             )
             if f:
@@ -161,7 +169,8 @@ class ContainerScanner:
         health = config.get("Healthcheck")
         if health is None:
             f = self._make_finding(
-                "no_health_check", target,
+                "no_health_check",
+                target,
                 "No HEALTHCHECK configured in container/image.",
             )
             if f:
@@ -178,7 +187,8 @@ class ContainerScanner:
             pass  # image has OCI metadata, considered maintained
         elif not created:
             f = self._make_finding(
-                "outdated_base_image", target,
+                "outdated_base_image",
+                target,
                 "Image has no creation timestamp — may be using an outdated or untracked base.",
             )
             if f:
@@ -191,7 +201,8 @@ class ContainerScanner:
                 port_num = int(port_proto.split("/")[0])
                 if port_num in _DANGEROUS_PORTS:
                     f = self._make_finding(
-                        "dangerous_ports", target,
+                        "dangerous_ports",
+                        target,
                         f"Dangerous port {port_num} is exposed on the container.",
                     )
                     if f:
@@ -207,7 +218,8 @@ class ContainerScanner:
                 port_num = int(port_proto.split("/")[0])
                 if port_num in _DANGEROUS_PORTS:
                     f = self._make_finding(
-                        "dangerous_ports", target,
+                        "dangerous_ports",
+                        target,
                         f"Image exposes dangerous port {port_num}.",
                     )
                     if f:

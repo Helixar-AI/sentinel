@@ -1,4 +1,5 @@
 """25 tests for ConfigScanner."""
+
 from __future__ import annotations
 
 import json

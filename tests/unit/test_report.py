@@ -1,4 +1,5 @@
 """17 tests for HTML, SARIF, and terminal renderers."""
+
 from __future__ import annotations
 
 from sentinel.core import Finding, ScanResult, Severity
@@ -32,6 +33,7 @@ def _make_finding(
 
 
 # ── Terminal renderer ──────────────────────────────────────────────────────
+
 
 class TestTerminalRenderer:
     def test_plain_output_is_string(self):
@@ -78,6 +80,7 @@ class TestTerminalRenderer:
 
 # ── HTML renderer ──────────────────────────────────────────────────────────
 
+
 class TestHTMLRenderer:
     def test_returns_string(self):
         output = html_report.render([_make_result()])
@@ -112,6 +115,7 @@ class TestHTMLRenderer:
 
 
 # ── SARIF renderer ─────────────────────────────────────────────────────────
+
 
 class TestSARIFRenderer:
     def test_sarif_returns_dict(self):

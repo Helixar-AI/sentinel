@@ -173,7 +173,7 @@ class TestWatchCommand:
     """Tests for `sentinel watch`
 
     As watch runs an infinite loop all tests patch ``signal.signal``
-    to capture the SIGINT handler and ``time.sleep`` to fire it after the 
+    to capture the SIGINT handler and ``time.sleep`` to fire it after the
     first sleep call, giving exactly one full scan cycle per invocation
     """
 
@@ -190,8 +190,9 @@ class TestWatchCommand:
             if "handler" in captured:
                 captured["handler"](None, None)
 
-        with patch("signal.signal", side_effect=_mock_signal), patch(
-            "time.sleep", side_effect=_mock_sleep
+        with (
+            patch("signal.signal", side_effect=_mock_signal),
+            patch("time.sleep", side_effect=_mock_sleep),
         ):
             yield
 
@@ -210,8 +211,9 @@ class TestWatchCommand:
             if call_count["n"] >= 2 and "handler" in captured:
                 captured["handler"](None, None)
 
-        with patch("signal.signal", side_effect=_mock_signal), patch(
-            "time.sleep", side_effect=_mock_sleep
+        with (
+            patch("signal.signal", side_effect=_mock_signal),
+            patch("time.sleep", side_effect=_mock_sleep),
         ):
             yield
 
@@ -266,9 +268,7 @@ class TestWatchCommand:
             return original_scan(self, path)
 
         with patch.object(ConfigScanner, "scan", _patched_scan):
-            result = runner.invoke(
-                cli, ["watch", "--config", str(cfg), "--interval", "1"]
-            )
+            result = runner.invoke(cli, ["watch", "--config", str(cfg), "--interval", "1"])
 
         assert "CHANGED" in result.output
 
@@ -313,7 +313,17 @@ class TestWatchCommand:
         out = str(tmp_path / "out.json")
         runner.invoke(
             cli,
-            ["watch", "--config", insecure_file, "--format", "json", "--output", out, "--interval", "1"],
+            [
+                "watch",
+                "--config",
+                insecure_file,
+                "--format",
+                "json",
+                "--output",
+                out,
+                "--interval",
+                "1",
+            ],
         )
         data = json.loads(Path(out).read_text())
         rule_ids = [f["rule_id"] for r in data["results"] for f in r["findings"]]

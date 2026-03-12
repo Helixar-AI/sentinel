@@ -1,4 +1,5 @@
 """sentinel CLI — 5 commands: config, probe, container, scan, watch."""
+
 from __future__ import annotations
 
 import sys

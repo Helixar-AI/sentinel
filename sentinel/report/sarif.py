@@ -1,4 +1,5 @@
 """SARIF 2.1 and plain JSON output renderers."""
+
 from __future__ import annotations
 
 import json
@@ -16,7 +17,9 @@ _SARIF_LEVEL = {
 }
 
 SENTINEL_VERSION = "0.1.0"
-SARIF_SCHEMA = "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+SARIF_SCHEMA = (
+    "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json"
+)
 
 
 def render_sarif(results: List[ScanResult]) -> Dict[str, Any]:
@@ -40,23 +43,27 @@ def render_sarif(results: List[ScanResult]) -> Dict[str, Any]:
                     },
                 }
             level = _SARIF_LEVEL.get(f.severity.value, "warning")
-            run_results.append({
-                "ruleId": f.rule_id,
-                "level": level,
-                "message": {"text": f.detail},
-                "locations": [
-                    {
-                        "physicalLocation": {
-                            "artifactLocation": {"uri": f.location},
+            run_results.append(
+                {
+                    "ruleId": f.rule_id,
+                    "level": level,
+                    "message": {"text": f.detail},
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {"uri": f.location},
+                            }
                         }
-                    }
-                ],
-                "fixes": [
-                    {
-                        "description": {"text": f.remediation},
-                    }
-                ] if f.remediation else [],
-            })
+                    ],
+                    "fixes": [
+                        {
+                            "description": {"text": f.remediation},
+                        }
+                    ]
+                    if f.remediation
+                    else [],
+                }
+            )
 
     sarif = {
         "$schema": SARIF_SCHEMA,
@@ -97,22 +104,24 @@ def render_json(results: List[ScanResult]) -> Dict[str, Any]:
         "results": [],
     }
     for result in results:
-        output["results"].append({
-            "module": result.module,
-            "target": result.target,
-            "findings": [
-                {
-                    "rule_id": f.rule_id,
-                    "severity": f.severity.value,
-                    "title": f.title,
-                    "detail": f.detail,
-                    "location": f.location,
-                    "remediation": f.remediation,
-                    "reference": f.reference,
-                }
-                for f in result.findings
-            ],
-        })
+        output["results"].append(
+            {
+                "module": result.module,
+                "target": result.target,
+                "findings": [
+                    {
+                        "rule_id": f.rule_id,
+                        "severity": f.severity.value,
+                        "title": f.title,
+                        "detail": f.detail,
+                        "location": f.location,
+                        "remediation": f.remediation,
+                        "reference": f.reference,
+                    }
+                    for f in result.findings
+                ],
+            }
+        )
     return output
 
 

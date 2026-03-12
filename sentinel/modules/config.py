@@ -1,4 +1,5 @@
 """Static analysis of MCP server configuration files."""
+
 from __future__ import annotations
 
 import json
@@ -103,7 +104,8 @@ class ConfigScanner:
         auth = _get_nested(config, "auth") or _get_nested(config, "authentication")
         if auth is None:
             f = self._make_finding(
-                "no_auth", str(path),
+                "no_auth",
+                str(path),
                 "No 'auth' or 'authentication' block found in config.",
             )
             if f:
@@ -119,7 +121,8 @@ class ConfigScanner:
                 if value.startswith("$") or value.startswith("${"):
                     continue
                 f = self._make_finding(
-                    "plaintext_secrets", str(path),
+                    "plaintext_secrets",
+                    str(path),
                     f"Possible plaintext secret at key '{key}'.",
                 )
                 if f:
@@ -136,14 +139,16 @@ class ConfigScanner:
             return
         if isinstance(perms, str) and perms in ("*", "all"):
             f = self._make_finding(
-                "wildcard_permissions", str(path),
+                "wildcard_permissions",
+                str(path),
                 f"Tool permissions set to wildcard value '{perms}'.",
             )
             if f:
                 result.add_finding(f)
         elif isinstance(perms, list) and ("*" in perms or "all" in perms):
             f = self._make_finding(
-                "wildcard_permissions", str(path),
+                "wildcard_permissions",
+                str(path),
                 "Tool permissions list contains wildcard entry.",
             )
             if f:
@@ -158,7 +163,8 @@ class ConfigScanner:
         )
         if rl is None:
             f = self._make_finding(
-                "no_rate_limiting", str(path),
+                "no_rate_limiting",
+                str(path),
                 "No rate_limit or throttle block found in config.",
             )
             if f:
@@ -169,7 +175,8 @@ class ConfigScanner:
         debug_on = ("true", "1", "yes", "on")
         if debug is True or (isinstance(debug, str) and debug.lower() in debug_on):
             f = self._make_finding(
-                "debug_mode_enabled", str(path),
+                "debug_mode_enabled",
+                str(path),
                 f"'debug' is set to {debug!r} — disable in production.",
             )
             if f:
@@ -184,7 +191,8 @@ class ConfigScanner:
         )
         if tls is None:
             f = self._make_finding(
-                "no_tls_config", str(path),
+                "no_tls_config",
+                str(path),
                 "No tls/ssl block found in config. Transport encryption not configured.",
             )
             if f:
@@ -204,14 +212,16 @@ class ConfigScanner:
 
         if origins == "*":
             f = self._make_finding(
-                "wildcard_cors", str(path),
+                "wildcard_cors",
+                str(path),
                 "CORS allowed_origins is set to '*', permitting all origins.",
             )
             if f:
                 result.add_finding(f)
         elif isinstance(origins, list) and "*" in origins:
             f = self._make_finding(
-                "wildcard_cors", str(path),
+                "wildcard_cors",
+                str(path),
                 "CORS allowed_origins list contains wildcard '*'.",
             )
             if f:
@@ -225,7 +235,8 @@ class ConfigScanner:
         )
         if iv is None:
             f = self._make_finding(
-                "no_input_validation", str(path),
+                "no_input_validation",
+                str(path),
                 "No input_validation block found in config.",
             )
             if f:
@@ -247,7 +258,8 @@ class ConfigScanner:
                 flag_on = ("true", "1", "yes")
                 if flag_val is True or (isinstance(flag_val, str) and flag_val.lower() in flag_on):
                     f = self._make_finding(
-                        "sensitive_logging", str(path),
+                        "sensitive_logging",
+                        str(path),
                         f"Logging config has '{flag_name}' enabled — may expose sensitive data.",
                     )
                     if f:
@@ -262,7 +274,8 @@ class ConfigScanner:
         )
         if timeout is None:
             f = self._make_finding(
-                "no_timeout", str(path),
+                "no_timeout",
+                str(path),
                 "No timeout or timeout_seconds field found in config.",
             )
             if f:

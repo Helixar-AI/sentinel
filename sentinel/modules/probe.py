@@ -1,4 +1,5 @@
 """Live MCP endpoint security analysis."""
+
 from __future__ import annotations
 
 import socket
@@ -57,13 +58,15 @@ class ProbeScanner:
         try:
             resp = requests.get(endpoint, timeout=timeout, verify=False, allow_redirects=False)
         except RequestException as exc:
-            result.add_finding(Finding(
-                rule_id="PRB-ERR",
-                severity=__import__("sentinel.core", fromlist=["Severity"]).Severity.INFO,
-                title="Endpoint unreachable",
-                detail=str(exc),
-                location=endpoint,
-            ))
+            result.add_finding(
+                Finding(
+                    rule_id="PRB-ERR",
+                    severity=__import__("sentinel.core", fromlist=["Severity"]).Severity.INFO,
+                    title="Endpoint unreachable",
+                    detail=str(exc),
+                    location=endpoint,
+                )
+            )
             return result
 
         self._check_no_auth(resp, result, endpoint)
@@ -88,12 +91,11 @@ class ProbeScanner:
                     not_after = cert.get("notAfter", "")
                     if not_after:
                         cert_fmt = "%b %d %H:%M:%S %Y %Z"
-                        expiry = datetime.strptime(not_after, cert_fmt).replace(
-                            tzinfo=timezone.utc
-                        )
+                        expiry = datetime.strptime(not_after, cert_fmt).replace(tzinfo=timezone.utc)
                         if expiry < datetime.now(timezone.utc):
                             f = self._make_finding(
-                                "tls_cert_invalid", f"{host}:{port}",
+                                "tls_cert_invalid",
+                                f"{host}:{port}",
                                 f"Certificate expired on {not_after}.",
                             )
                             if f:
@@ -121,7 +123,8 @@ class ProbeScanner:
                     version = ssock.version()
                     if version in ("SSLv3", "TLSv1", "TLSv1.1"):
                         f = self._make_finding(
-                            "weak_tls_version", f"{host}:{port}",
+                            "weak_tls_version",
+                            f"{host}:{port}",
                             f"Server negotiated {version} — upgrade to TLS 1.2+.",
                         )
                         if f:
@@ -132,7 +135,8 @@ class ProbeScanner:
     def _check_no_auth(self, resp, result: ScanResult, endpoint: str) -> None:
         if resp.status_code not in (401, 403):
             f = self._make_finding(
-                "no_auth_endpoint", endpoint,
+                "no_auth_endpoint",
+                endpoint,
                 f"Unauthenticated GET returned HTTP {resp.status_code} (expected 401/403).",
             )
             if f:
@@ -143,7 +147,8 @@ class ProbeScanner:
             value = resp.headers.get(header, "")
             if value and any(char.isdigit() for char in value):
                 f = self._make_finding(
-                    "info_disclosure_headers", endpoint,
+                    "info_disclosure_headers",
+                    endpoint,
                     f"Header '{header}: {value}' discloses version information.",
                 )
                 if f:
@@ -155,7 +160,8 @@ class ProbeScanner:
         missing = [h for h in _SECURITY_HEADERS if h not in lower_headers]
         if missing:
             f = self._make_finding(
-                "missing_security_headers", endpoint,
+                "missing_security_headers",
+                endpoint,
                 f"Missing security headers: {', '.join(missing)}.",
             )
             if f:
@@ -164,12 +170,14 @@ class ProbeScanner:
     def _check_tool_listing_exposed(self, endpoint: str, result: ScanResult, timeout: int) -> None:
         try:
             import requests
+
             base = endpoint.rstrip("/")
             list_url = f"{base}/tools/list"
             resp = requests.get(list_url, timeout=timeout, verify=False)
             if resp.status_code == 200:
                 f = self._make_finding(
-                    "tool_listing_exposed", list_url,
+                    "tool_listing_exposed",
+                    list_url,
                     f"GET {list_url} returned 200 without authentication.",
                 )
                 if f:
@@ -182,13 +190,15 @@ class ProbeScanner:
             return
         try:
             import requests
+
             bad_url = endpoint.rstrip("/") + "/nonexistent-sentinel-probe-12345"
             resp = requests.get(bad_url, timeout=timeout, verify=False)
             body = resp.text.lower()
-            verbose_markers = ["traceback", "stack trace", "exception", "at line", "file \""]
+            verbose_markers = ["traceback", "stack trace", "exception", "at line", 'file "']
             if any(marker in body for marker in verbose_markers):
                 f = self._make_finding(
-                    "verbose_errors", bad_url,
+                    "verbose_errors",
+                    bad_url,
                     "Error response contains stack trace or verbose debug information.",
                 )
                 if f:
@@ -204,7 +214,8 @@ class ProbeScanner:
         )
         if not has_rl and resp.status_code != 429:
             f = self._make_finding(
-                "no_rate_limiting_probe", endpoint,
+                "no_rate_limiting_probe",
+                endpoint,
                 "No rate-limiting headers detected in response (X-RateLimit-Limit, Retry-After).",
             )
             if f:
