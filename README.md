@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/Helixar-AI/sentinel/actions/workflows/ci.yml/badge.svg)](https://github.com/Helixar-AI/sentinel/actions/workflows/ci.yml)
 [![GitHub Stars](https://img.shields.io/github/stars/Helixar-AI/sentinel?style=social)](https://github.com/Helixar-AI/sentinel/stargazers)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-blue)](https://pypi.org/project/helixar-sentinel)
 [![PyPI](https://img.shields.io/pypi/v/helixar-sentinel?color=blue)](https://pypi.org/project/helixar-sentinel)
 [![Marketplace](https://img.shields.io/badge/GitHub%20Action-Marketplace-2088FF?logo=github-actions&logoColor=white)](https://github.com/marketplace/actions/sentinel-mcp-security-scanner)
@@ -198,7 +198,7 @@ python -m pytest tests/ --cov=sentinel --cov-report=html
 
 ## License
 
-MIT — see [LICENSE](LICENSE)
+Apache-2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 ---
 
